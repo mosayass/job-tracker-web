@@ -9,7 +9,47 @@
 <body>
 
     <div id="app">
+        <nav class="navbar">
+            <h1>JobTracker</h1>
+            <button id="nav-add-btn">+ Add Job</button>
+        </nav>
+
+        <div class="stats-bar">
+            <span><strong id="stat-applied">0</strong> Applied</span>
+            <span><strong id="stat-interview">0</strong> Interview</span>
+            <span><strong id="stat-accepted">0</strong> Accepted</span>
         </div>
+
+        <main id="list-view">
+            <div id="job-list-container">
+                <p class="empty-state">No jobs yet. Click "+ Add Job" to start.</p>
+            </div>
+        </main>
+
+        <section id="form-view" style="display: none;">
+            <div class="form-container">
+                <h2>Add New Job</h2>
+                <form id="job-form">
+                    <div class="input-group">
+                        <label for="job-title">Job Title</label>
+                        <input type="text" id="job-title" placeholder="e.g. Software Engineer" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="company-name">Company</label>
+                        <input type="text" id="company-name" placeholder="e.g. Google" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="job-url">Job URL</label>
+                        <input type="url" id="job-url" placeholder="https://..." required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="cancel-btn">Cancel</button>
+                        <button type="submit" id="save-btn">Save Job</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
 
     <script src="app.js"></script>
 </body>

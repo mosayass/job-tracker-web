@@ -1,0 +1,189 @@
+/* Variables & Reset */
+:root {
+    --bg-color: #1a1a1a;
+    --surface-color: #2a2a2a;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --accent-color: #3b82f6;
+    
+    /* Status Colors */
+    --status-applied: #3b82f6;   /* Blue */
+    --status-interview: #f59e0b; /* Amber */
+    --status-accepted: #10b981;  /* Green */
+    --status-rejected: #ef4444;  /* Red */
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+/* Layout Containers */
+#app {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #333;
+}
+
+#nav-add-btn {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* Stats Bar */
+.stats-bar {
+    display: flex;
+    justify-content: space-around;
+    background-color: var(--surface-color);
+    padding: 12px;
+    margin: 20px 0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.stats-bar strong {
+    color: var(--text-primary);
+}
+
+/* Job Cards */
+.job-card {
+    background-color: var(--surface-color);
+    padding: 16px;
+    margin-bottom: 16px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+}
+
+.company-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background-color: #333;
+}
+
+.job-info {
+    flex-grow: 1;
+}
+
+.job-info h3 {
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+}
+
+.job-info p {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.status-applied { background-color: rgba(59, 130, 246, 0.2); color: var(--status-applied); }
+.status-interview { background-color: rgba(245, 158, 11, 0.2); color: var(--status-interview); }
+.status-accepted { background-color: rgba(16, 185, 129, 0.2); color: var(--status-accepted); }
+.status-rejected { background-color: rgba(239, 68, 68, 0.2); color: var(--status-rejected); }
+
+/* Form Styling */
+.form-container {
+    background-color: var(--surface-color);
+    padding: 24px;
+    border-radius: 12px;
+}
+
+.input-group {
+    margin-bottom: 16px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px;
+    background-color: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: white;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.form-actions button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#cancel-btn { background-color: #444; color: white; }
+#save-btn { background-color: var(--status-accepted); color: white; }
+
+/* Responsive Adjustments */
+@media (max-width: 480px) {
+    #app { padding: 10px; }
+    .navbar h1 { font-size: 1.2rem; }
+}
+
+.empty-state {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-top: 40px;
+}
+.delete-btn {
+    font-size: 1.2rem;
+    filter: grayscale(1);
+    transition: filter 0.2s;
+}
+
+.delete-btn:hover {
+    filter: grayscale(0);
+}
+
+select.status-badge {
+    border: none;
+    outline: none;
+    appearance: none; /* Removes default browser arrow for cleaner look */
+    text-align: center;
+}
