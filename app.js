@@ -1,16 +1,49 @@
-const STORAGE_KEY = 'job_tracker_data';
+// JobRepository: Encapsulates all Data Access Logic (DAL)
+const JobRepository = {
+    STORAGE_KEY: 'job_tracker_pro_data',
 
-const saveToStorage = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
+    // READ: Get all jobs
+    getAll() {
+        const data = localStorage.getItem(this.STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+    },
+
+    // CREATE: Add a new job with validation
+    add(job) {
+        const jobs = this.getAll();
+        jobs.push({
+            ...job,
+            id: crypto.randomUUID(), // Better than Date.now()
+            createdAt: new Date().toISOString()
+        });
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(jobs));
+    },
+
+    // UPDATE: Update a specific job field
+    update(id, updatedFields) {
+        let jobs = this.getAll();
+        jobs = jobs.map(job => job.id === id ? { ...job, ...updatedFields } : job);
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(jobs));
+    },
+
+    // DELETE: Remove job
+    delete(id) {
+        let jobs = this.getAll();
+        jobs = jobs.filter(job => job.id !== id);
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(jobs));
+    },
+
+    // VALIDATION: Utility for URL integrity
+    isValidUrl(string) {
+        try {
+            new URL(string);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
 };
 
-const loadFromStorage = () => {
-    const data = localStorage.getItem(STORAGE_KEY);
-    jobs = data ? JSON.parse(data) : [];
-};
-
-// 1. In-Memory State
-let jobs = [];
 
 
 // 2. DOM Selectors
@@ -39,20 +72,28 @@ const showFormView = () => {
 };
 
 // 4. Rendering Engine (UI Generation)
-const renderJobs = () => {
-    // Clear current UI
-    jobListContainer.innerHTML = '';
-
-    if (jobs.length === 0) {
-        jobListContainer.innerHTML = '<p class="empty-state">No jobs yet. Click "+ Add Job" to start.</p>';
-        updateStats();
-        return;
+const renderJobs = (filterText = '') => {
+    let jobs = JobRepository.getAll(); // Fetch from DAL
+    if (filterText) {//search& filter functionality
+        const query = filterText.toLowerCase();
+        jobs = jobs.filter(job => 
+            job.company.toLowerCase().includes(query) || 
+            job.title.toLowerCase().includes(query)
+        );
     }
 
-    // Build Fragment for performance (similar to a batch UI update)
+    jobListContainer.innerHTML = '';
+    
+    if (jobs.length === 0) {
+        jobListContainer.innerHTML = '<p class="empty-state">No jobs yet. Click "+ Add Job" to start.</p>';
+        updateStats(jobs);
+        return;
+    }
+    updateStats(jobs);
+
     const fragment = document.createDocumentFragment();
 
-    jobs.forEach((job, index) => {
+    jobs.forEach((job) => {
         const card = document.createElement('div');
         card.className = 'job-card';
         card.innerHTML = `
@@ -61,73 +102,79 @@ const renderJobs = () => {
                 <h3>${job.title}</h3>
                 <p>${job.company}</p>
             </div>
-            <select class="status-badge status-${job.status.toLowerCase()}" data-index="${index}">
+            <select class="status-badge status-${job.status.toLowerCase()}" data-id="${job.id}">
                 <option value="Applied" ${job.status === 'Applied' ? 'selected' : ''}>Applied</option>
                 <option value="Interview" ${job.status === 'Interview' ? 'selected' : ''}>Interview</option>
                 <option value="Accepted" ${job.status === 'Accepted' ? 'selected' : ''}>Accepted</option>
                 <option value="Rejected" ${job.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
             </select>
-            <button class="delete-btn" data-index="${index}" style="background:none; border:none; cursor:pointer; margin-left:10px;">🗑️</button>
+            <button class="delete-btn" data-id="${job.id}" style="background:none; border:none; cursor:pointer; margin-left:10px;">🗑️</button>
         `;
         fragment.appendChild(card);
     });
 
     jobListContainer.appendChild(fragment);
-    updateStats();
 };
+ 
 
-// Placeholder for Stats logic
-const updateStats = () => {
+const updateStats = (jobsData) => {
     const counts = { Applied: 0, Interview: 0, Accepted: 0 };
-    jobs.forEach(j => counts[j.status]++);
+    jobsData.forEach(j => {
+        if (counts[j.status] !== undefined) counts[j.status]++;
+    });
     
     document.getElementById('stat-applied').textContent = counts.Applied;
     document.getElementById('stat-interview').textContent = counts.Interview;
     document.getElementById('stat-accepted').textContent = counts.Accepted;
 };
 
-// 5. Event Listeners
+// Event Listeners
 navAddBtn.addEventListener('click', showFormView);
 cancelBtn.addEventListener('click', showListView);
 
 jobForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
+    const urlInput = document.getElementById('job-url').value;
+
+    // Validation Challenge: Ensuring data integrity
+    if (!JobRepository.isValidUrl(urlInput)) {
+        alert("Please enter a valid URL (e.g., https://google.com)");
+        return;
+    }
+
     const newJob = {
-        id: Date.now(), // Unique ID for future CRUD ops
         title: document.getElementById('job-title').value,
         company: document.getElementById('company-name').value,
-        url: document.getElementById('job-url').value,
-        status: 'Applied' // Default starting status
+        url: urlInput,
+        status: 'Applied'
     };
 
-    jobs.push(newJob);
-    saveToStorage();
+    JobRepository.add(newJob); // DAL Call
     showListView();
 });
 
 jobListContainer.addEventListener('click', (e) => {
-    const index = e.target.dataset.index;
-
-    // Handle Delete
+    const id = e.target.dataset.id;
     if (e.target.classList.contains('delete-btn')) {
         if (confirm('Delete this job?')) {
-            jobs.splice(index, 1);
-            saveToStorage();
+            JobRepository.delete(id);
             renderJobs();
         }
     }
 });
 
 jobListContainer.addEventListener('change', (e) => {
-    // Handle Status Change
     if (e.target.classList.contains('status-badge')) {
-        const index = e.target.dataset.index;
-        jobs[index].status = e.target.value;
-        saveToStorage();
-        renderJobs(); // Re-render to update badge color and stats
+        const id = e.target.dataset.id;
+        JobRepository.update(id, { status: e.target.value });
+        renderJobs();
     }
 });
+const searchInput = document.getElementById('search-input');
 
-loadFromStorage();
+searchInput.addEventListener('input', (e) => {
+    renderJobs(e.target.value);
+});
+
 showListView();
