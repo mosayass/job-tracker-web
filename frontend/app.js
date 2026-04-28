@@ -1,46 +1,41 @@
 // JobRepository: Encapsulates all Data Access Logic (DAL)
+// JobRepository: Now communicates with the Node/Postgres API
 const JobRepository = {
-    STORAGE_KEY: 'job_tracker_pro_data',
+    API_URL: 'http://localhost:3000/api/jobs',
 
-    // READ: Get all jobs
-    getAll() {
-        const data = localStorage.getItem(this.STORAGE_KEY);
-        return data ? JSON.parse(data) : [];
+    async getAll() {
+        const response = await fetch(this.API_URL);
+        return await response.json();
     },
 
-    // CREATE: Add a new job with validation
-    add(job) {
-        const jobs = this.getAll();
-        jobs.push({
-            ...job,
-            id: crypto.randomUUID(), // Better than Date.now()
-            createdAt: new Date().toISOString()
+    async add(job) {
+        await fetch(this.API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ...job,
+                id: crypto.randomUUID(),
+                createdAt: new Date().toISOString()
+            })
         });
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(jobs));
     },
 
-    // UPDATE: Update a specific job field
-    update(id, updatedFields) {
-        let jobs = this.getAll();
-        jobs = jobs.map(job => job.id === id ? { ...job, ...updatedFields } : job);
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(jobs));
+    async update(id, updatedFields) {
+        await fetch(`${this.API_URL}/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedFields)
+        });
     },
 
-    // DELETE: Remove job
-    delete(id) {
-        let jobs = this.getAll();
-        jobs = jobs.filter(job => job.id !== id);
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(jobs));
+    async delete(id) {
+        await fetch(`${this.API_URL}/${id}`, {
+            method: 'DELETE'
+        });
     },
 
-    // VALIDATION: Utility for URL integrity
     isValidUrl(string) {
-        try {
-            new URL(string);
-            return true;
-        } catch (_) {
-            return false;
-        }
+        try { new URL(string); return true; } catch (_) { return false; }
     }
 };
 
@@ -72,8 +67,8 @@ const showFormView = () => {
 };
 
 // 4. Rendering Engine (UI Generation)
-const renderJobs = (filterText = '') => {
-    let jobs = JobRepository.getAll(); // Fetch from DAL
+const renderJobs =async (filterText = '') => {
+    let jobs = await JobRepository.getAll(); // Fetch from DAL
     if (filterText) {//search& filter functionality
         const query = filterText.toLowerCase();
         jobs = jobs.filter(job => 
@@ -132,7 +127,7 @@ const updateStats = (jobsData) => {
 navAddBtn.addEventListener('click', showFormView);
 cancelBtn.addEventListener('click', showListView);
 
-jobForm.addEventListener('submit', (e) => {
+jobForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const urlInput = document.getElementById('job-url').value;
@@ -150,25 +145,25 @@ jobForm.addEventListener('submit', (e) => {
         status: 'Applied'
     };
 
-    JobRepository.add(newJob); // DAL Call
+    await JobRepository.add(newJob); // DAL Call
     showListView();
 });
 
-jobListContainer.addEventListener('click', (e) => {
+jobListContainer.addEventListener('click', async (e) => {
     const id = e.target.dataset.id;
     if (e.target.classList.contains('delete-btn')) {
         if (confirm('Delete this job?')) {
-            JobRepository.delete(id);
-            renderJobs();
+            await JobRepository.delete(id);
+            await renderJobs();
         }
     }
 });
 
-jobListContainer.addEventListener('change', (e) => {
+jobListContainer.addEventListener('change', async (e) => {
     if (e.target.classList.contains('status-badge')) {
         const id = e.target.dataset.id;
-        JobRepository.update(id, { status: e.target.value });
-        renderJobs();
+        await JobRepository.update(id, { status: e.target.value });
+        await renderJobs();
     }
 });
 const searchInput = document.getElementById('search-input');
